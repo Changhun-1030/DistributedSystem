@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package recruitment;
+  
+option java_package = "recruitment";
+option java_multiple_files = true;
+
+// Applicant Management Services
+service CandidateService {
+    rpc SubmitApplication(ApplicationRequest) returns (ApplicationResponse);
+    rpc SubmitMultipleApplications(stream ApplicationRequest) returns (ApplicationResponse);
+    rpc GetCandidateStatus(StatusRequest) returns (StatusResponse);
+    rpc UpdateApplication(UpdateRequest) returns (ApplicationResponse);
+}
+
+// Interview scheduling service
+service InterviewSchedulerService {
+    rpc ScheduleInterview(ScheduleRequest) returns (ScheduleResponse);
+    rpc GetInterviewSchedule(ScheduleStatusRequest) returns (ScheduleResponse);
+    rpc ModifyInterview(ModifyRequest) returns (ScheduleResponse);
+    rpc StreamAllInterviewSchedules(ScheduleStatusRequest) returns (stream ScheduleResponse);
+}
+
+// AI candidate evaluation service
+service CandidateEvaluationService {
+    rpc EvaluateCandidate(EvaluationRequest) returns (EvaluationResponse);
+    rpc GetEvaluationResult(EvaluationStatusRequest) returns (EvaluationResponse);
+    rpc RecommendJobs(RecommendationRequest) returns (RecommendationResponse);
+    rpc RealTimeChat(stream ChatMessage) returns (stream ChatMessage);
+}
+
+// Messages
+message ApplicationRequest {
+    string candidate_id = 1;
+    string name = 2;
+    string resume_url = 3;
+    repeated string skills = 4;
+    string job_id = 5;
+}
+
+message UpdateRequest {
+    string candidate_id = 1;
+    string resume_url = 2;
+    repeated string skills = 3;
+}
+
+message ApplicationResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+message StatusRequest {
+    string candidate_id = 1;
+}
+
+message StatusResponse {
+    string status = 1;
+    string interview_date = 2;
+}
+
+message ScheduleRequest {
+    string candidate_id = 1;
+    string interviewer_id = 2;
+    string preferred_time = 3;
+}
+
+message ScheduleStatusRequest {
+    string candidate_id = 1;
+}
+
+message ModifyRequest {
+    string candidate_id = 1;
+    string new_time = 2;
+    bool cancel = 3;
+}
+
+message ScheduleResponse {
+    bool success = 1;
+    string message = 2;
+    string scheduled_time = 3;
+}
+
+message EvaluationRequest {
+    string candidate_id = 1;
+    repeated string skills = 2;
+    string job_description = 3;
+}
+
+message EvaluationStatusRequest {
+    string candidate_id = 1;
+}
+
+message EvaluationResponse {
+    bool success = 1;
+    double score = 2;
+    string recommendation = 3;
+}
+
+message RecommendationRequest {
+    string candidate_id = 1;
+    repeated string preferred_skills = 2;
+}
+
+message RecommendationResponse {
+    repeated Job jobs = 1;
+}
+
+message Job {
+    string job_id = 1;
+    string title = 2;
+    string company = 3;
+    string location = 4;
+}
+
+message ChatMessage {
+    string sender = 1;
+    string message = 2;
+    string timestamp = 3;
+}
+
