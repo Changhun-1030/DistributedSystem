@@ -13,9 +13,10 @@ public class GrpcServer {
 
       
         ServiceRegistry registry = new ServiceRegistry();
-        registry.registerService("CandidateService", candidateService);
-        registry.registerService("InterviewSchedulerService", interviewSchedulerService);
-        registry.registerService("CandidateEvaluationService", evaluationService);
+        registry.registerService("CandidateService", new CandidateServiceImpl(), 50051);
+        registry.registerService("InterviewSchedulerService", new InterviewSchedulerServiceImpl(), 50052);
+        registry.registerService("CandidateEvaluationService", new CandidateEvaluationServiceImpl(), 50053);
+
 
         
         Server server = ServerBuilder.forPort(50051)

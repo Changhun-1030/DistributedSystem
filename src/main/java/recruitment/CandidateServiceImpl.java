@@ -1,6 +1,9 @@
 package recruitment;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import recruitment.LoggerUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,19 +11,37 @@ public class CandidateServiceImpl extends CandidateServiceGrpc.CandidateServiceI
 
     @Override
     public void submitApplication(ApplicationRequest request, StreamObserver<ApplicationResponse> responseObserver) {
-        System.out.println("Application received from: " + request.getName());
+        try {
+            if (request.getName() == null || request.getName().isBlank()) {
+                LoggerUtil.log("Error: submitApplication - name is missing or blank");
+                responseObserver.onError(Status.INVALID_ARGUMENT
+                        .withDescription("Candidate name must not be empty.")
+                        .asRuntimeException());
+                return;
+            }
 
-        ApplicationResponse response = ApplicationResponse.newBuilder()
-                .setSuccess(true)
-                .setMessage("Application submitted successfully for " + request.getName())
-                .build();
+            LoggerUtil.log("submitApplication called for candidateId=" + request.getCandidateId() + ", name=" + request.getName());
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
+            ApplicationResponse response = ApplicationResponse.newBuilder()
+                    .setSuccess(true)
+                    .setMessage("Application submitted successfully for " + request.getName())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            LoggerUtil.log("Unexpected error in submitApplication: " + e.getMessage());
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal server error")
+                    .augmentDescription(e.getMessage())
+                    .asRuntimeException());
+        }
     }
 
     @Override
     public void getCandidateStatus(StatusRequest request, StreamObserver<StatusResponse> responseObserver) {
+        LoggerUtil.log("getCandidateStatus called for candidateId=" + request.getCandidateId());
+
         StatusResponse response = StatusResponse.newBuilder()
                 .setStatus("Under Review")
                 .setInterviewDate("2025-04-01 10:00 AM")
@@ -32,6 +53,8 @@ public class CandidateServiceImpl extends CandidateServiceGrpc.CandidateServiceI
 
     @Override
     public void updateApplication(UpdateRequest request, StreamObserver<ApplicationResponse> responseObserver) {
+        LoggerUtil.log("updateApplication called for candidateId=" + request.getCandidateId());
+
         ApplicationResponse response = ApplicationResponse.newBuilder()
                 .setSuccess(true)
                 .setMessage("Application updated for candidate: " + request.getCandidateId())
@@ -41,7 +64,7 @@ public class CandidateServiceImpl extends CandidateServiceGrpc.CandidateServiceI
         responseObserver.onCompleted();
     }
 
-    //: Client Streaming 
+    // Client Streaming
     @Override
     public StreamObserver<ApplicationRequest> submitMultipleApplications(StreamObserver<ApplicationResponse> responseObserver) {
         return new StreamObserver<>() {
@@ -49,17 +72,20 @@ public class CandidateServiceImpl extends CandidateServiceGrpc.CandidateServiceI
 
             @Override
             public void onNext(ApplicationRequest applicationRequest) {
-                System.out.println("Received multiple application from: " + applicationRequest.getName());
+                LoggerUtil.log("submitMultipleApplications: received from name=" + applicationRequest.getName());
                 applications.add(applicationRequest);
             }
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
-            } 
+                LoggerUtil.log("submitMultipleApplications encountered error: " + t.getMessage());
+                responseObserver.onError(Status.UNKNOWN.withDescription("Client stream failed").asRuntimeException());
+            }
 
             @Override
             public void onCompleted() {
+                LoggerUtil.log("submitMultipleApplications completed with total=" + applications.size());
+
                 ApplicationResponse response = ApplicationResponse.newBuilder()
                         .setSuccess(true)
                         .setMessage(applications.size() + " applications received and processed successfully.")
