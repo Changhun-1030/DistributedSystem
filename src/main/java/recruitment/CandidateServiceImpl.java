@@ -3,6 +3,8 @@ package recruitment;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import recruitment.LoggerUtil;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,16 +42,21 @@ public class CandidateServiceImpl extends CandidateServiceGrpc.CandidateServiceI
 
     @Override
     public void getCandidateStatus(StatusRequest request, StreamObserver<StatusResponse> responseObserver) {
-        LoggerUtil.log("getCandidateStatus called for candidateId=" + request.getCandidateId());
+         LoggerUtil.log("getCandidateStatus called for candidateId=" + request.getCandidateId());
+
+        
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm a");
+        String formattedDateTime = now.format(formatter);
 
         StatusResponse response = StatusResponse.newBuilder()
-                .setStatus("Under Review")
-                .setInterviewDate("2025-04-01 10:00 AM")
-                .build();
+            .setStatus("Under Review")
+            .setInterviewDate(formattedDateTime)  
+            .build();
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+    responseObserver.onNext(response);
+    responseObserver.onCompleted();
+}
 
     @Override
     public void updateApplication(UpdateRequest request, StreamObserver<ApplicationResponse> responseObserver) {
