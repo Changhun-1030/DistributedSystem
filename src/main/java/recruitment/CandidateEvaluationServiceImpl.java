@@ -62,7 +62,7 @@ public class CandidateEvaluationServiceImpl extends CandidateEvaluationServiceGr
                 System.out.println("Received message from " + message.getSender() + ": " + message.getMessage());
                 ChatMessage reply = ChatMessage.newBuilder()
                         .setSender("Server")
-                        .setMessage("Echo: " + message.getMessage())
+                        .setMessage("AI: " + message.getMessage())
                         .setTimestamp(String.valueOf(System.currentTimeMillis()))
                         .build();
                 responseObserver.onNext(reply);
