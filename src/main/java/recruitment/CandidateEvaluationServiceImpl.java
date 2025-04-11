@@ -2,56 +2,83 @@ package recruitment;
 
 import io.grpc.stub.StreamObserver;
 import java.util.List;
-import java.util.Random;
 
 public class CandidateEvaluationServiceImpl extends CandidateEvaluationServiceGrpc.CandidateEvaluationServiceImplBase {
 
     @Override
-    public void evaluateCandidate(EvaluationRequest request, StreamObserver<EvaluationResponse> responseObserver) {
-       
-        double score = new Random().nextDouble() * 100;
-        String recommendation = score > 70 ? "Highly recommended" : "Needs improvement";
+public void evaluateCandidate(EvaluationRequest request, StreamObserver<EvaluationResponse> responseObserver) {
+    List<String> skills = request.getSkillsList();
+    double score = 50;
 
-        EvaluationResponse response = EvaluationResponse.newBuilder()
-                .setSuccess(true)
-                .setScore(score)
-                .setRecommendation(recommendation)
-                .build();
+    if (!skills.isEmpty()) {
+        int maxScore = 0;
 
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
+        for (String skill : skills) {
+            int skillScore;
+            switch (skill.toLowerCase()) {
+                case "java":
+                case "c++":
+                    skillScore = 90;
+                    break;
+                case "python":
+                    skillScore = 80;
+                    break;
+                case "mysql":
+                    skillScore = 70;
+                    break;
+                case "html":
+                    skillScore = 60;
+                    break;
+                default:
+                    skillScore = 55;
+            }
 
-    @Override
-    public void getEvaluationResult(EvaluationStatusRequest request, StreamObserver<EvaluationResponse> responseObserver) {
-      
-        EvaluationResponse response = EvaluationResponse.newBuilder()
-                .setSuccess(true)
-                .setScore(80.0)
-                .setRecommendation("Recommended for interview")
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
-    }
-
-    @Override
-    public void recommendJobs(RecommendationRequest request, StreamObserver<RecommendationResponse> responseObserver) {
-   
-        List<Job> jobs = List.of(
-                Job.newBuilder().setJobId("J01").setTitle("Software Engineer").setCompany("Google").setLocation("Seoul").build(),
-                Job.newBuilder().setJobId("J02").setTitle("Data Scientist").setCompany("Naver").setLocation("Incheon").build(),
-                Job.newBuilder().setJobId("J03").setTitle("Backend Developer").setCompany("Kakao").setLocation("Busan").build()
-        );
-
-        for (Job job : jobs) {
-            RecommendationResponse response = RecommendationResponse.newBuilder()
-                    .addJobs(job)
-                    .build();
-            responseObserver.onNext(response);
+            if (skillScore > maxScore) {
+                maxScore = skillScore;
+            }
         }
-        responseObserver.onCompleted();
+
+        score = maxScore;
     }
+
+    String recommendation = switch ((int) score) {
+        case 90 -> "Excellent in core programming";
+        case 80 -> "Very good in scripting";
+        case 70 -> "Good database skills";
+        case 60 -> "Basic web knowledge";
+        case 55 -> "Some general skills";
+        default -> "No significant skill detected";
+    };
+
+    EvaluationResponse response = EvaluationResponse.newBuilder()
+            .setSuccess(true)
+            .setScore(score)
+            .setRecommendation(recommendation)
+            .build();
+
+    responseObserver.onNext(response);
+    responseObserver.onCompleted();
+}
+
+    @Override
+public void recommendJobs(RecommendationRequest request, StreamObserver<RecommendationResponse> responseObserver) {
+
+    List<Job> jobs = List.of(
+            Job.newBuilder().setJobId("J01").setTitle("Engineer").setCompany("Samsung").setLocation("KOREA").build(),
+            Job.newBuilder().setJobId("J02").setTitle("Developer").setCompany("Apple").setLocation("US").build(),
+            Job.newBuilder().setJobId("J03").setTitle("Cybersecurity").setCompany("Google").setLocation("IRELAND").build(),
+            Job.newBuilder().setJobId("J04").setTitle("Web Designer").setCompany("TSMC").setLocation("TAIWAN").build(),
+            Job.newBuilder().setJobId("J05").setTitle("Data Analyst").setCompany("Amazon").setLocation("UK").build()
+    );
+
+    RecommendationResponse response = RecommendationResponse.newBuilder()
+            .addAllJobs(jobs) 
+            .build();
+
+    responseObserver.onNext(response);  
+    responseObserver.onCompleted();
+}
+
 
     @Override
     public StreamObserver<ChatMessage> realTimeChat(StreamObserver<ChatMessage> responseObserver) {
@@ -59,14 +86,15 @@ public class CandidateEvaluationServiceImpl extends CandidateEvaluationServiceGr
         return new StreamObserver<ChatMessage>() {
             @Override
             public void onNext(ChatMessage message) {
-                System.out.println("Received message from " + message.getSender() + ": " + message.getMessage());
-                ChatMessage reply = ChatMessage.newBuilder()
-                        .setSender("Server")
-                        .setMessage("AI: " + message.getMessage())
-                        .setTimestamp(String.valueOf(System.currentTimeMillis()))
-                        .build();
-                responseObserver.onNext(reply);
-            }
+            System.out.println("Received message from " + message.getSender() + ": " + message.getMessage());
+            ChatMessage reply = ChatMessage.newBuilder()
+            .setSender("Server")
+            .setMessage(message.getMessage())  
+            .setTimestamp(String.valueOf(System.currentTimeMillis()))
+            .build();
+            responseObserver.onNext(reply);
+        }
+
 
             @Override
             public void onError(Throwable t) {
